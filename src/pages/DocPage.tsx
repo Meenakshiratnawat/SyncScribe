@@ -13,7 +13,7 @@ const [status, setStatus] = useState<"connecting" | "connected" | "disconnected"
         <div className="docTitle">
           <div className="docDot" />
           <div>
-            <div className="docName">CollabPad</div>
+            <div className="docName">SyncScribe</div>
             <div className="docSub">Doc: {docId}</div>
           </div>
         </div>
