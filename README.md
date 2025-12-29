@@ -1,73 +1,155 @@
-# React + TypeScript + Vite
+# SyncScribe 📝
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+SyncScribe is a real-time collaborative document editor built with React, TypeScript, Tiptap, and Yjs.
 
-Currently, two official plugins are available:
+Think of it as a mini Google Docs–style editor where multiple users can type in the same document and see each other's changes instantly (using CRDTs instead of manual merge logic).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Features (current)
 
-## React Compiler
+- 🧩 **Rich-text editor** using [Tiptap](https://tiptap.dev/) (ProseMirror-based)
+- 🔁 **Real-time collaboration** with:
+  - [Yjs](https://yjs.dev/) CRDT document
+  - [y-websocket](https://github.com/yjs/y-websocket) as the sync server
+- 🌐 **Room-based documents**:
+  - URL pattern: `/doc/:id`
+  - `/doc/demo` → room id = `demo`
+- 🧠 **Global UI state with Redux Toolkit**:
+  - Sidebar tabs: **Comments** / **Versions**
+- 🧪 **Debug panel for collaboration**:
+  - Shows current room, WebSocket URL, connection status
+  - Sync status (`yes` / `no`)
+  - Number of other peers in the same document
+  - Number of Yjs updates received
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🏗 Tech Stack
+- **Frontend**
+  - React (TypeScript)
+  - Vite
+  - React Router
+  - Redux Toolkit
+  - Tiptap (React + StarterKit)
+  - Yjs
+  - y-websocket client
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Collaboration backend**
+  - `y-websocket` server (Node.js process)  
+    Used only for syncing Yjs documents over WebSockets.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🚀 Getting Started
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 1. Install dependencies
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Run WebSocket server + Vite dev server together
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+SyncScribe uses a `y-websocket` server on port **1234**.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+There is a helper script to start both:
+
+```bash
+npm run dev:all
 ```
+
+This will:
+
+- start `y-websocket` on `ws://localhost:1234`
+- start Vite dev server on `http://localhost:5173`
+
+You should see something like:
+
+```bash
+running at '0.0.0.0' on port 1234
+
+VITE v7.x.x  ready in XXX ms
+  ➜  Local:   http://localhost:5173/
+```
+
+### 3. Open the app
+
+Go to:
+
+```text
+http://localhost:5173/doc/demo
+```
+
+### 4. Test collaboration
+
+1. Open `http://localhost:5173/doc/demo` in **Tab 1**.
+2. Open the same URL in **Tab 2** (or another browser / incognito).
+3. Start typing in the editor in Tab 1.
+4. You should see the text appear in Tab 2 in real time.
+
+At the top of the editor there is a small debug bar that shows:
+
+- `room: demo`
+- `ws: ws://localhost:1234`
+- `status: connected`
+- `sync: yes`
+- `peers: N` (number of **other** clients in this room)
+
+---
+
+## 📂 Project Structure (high-level)
+
+```text
+src/
+  main.tsx          # React entry point
+  App.tsx           # Routes + main layout
+  pages/
+    DocPage.tsx     # /doc/:id page, passes docId to editor + sidebar
+  components/
+    CollabEditor.tsx  # Tiptap + Yjs + y-websocket integration
+    Sidebar.tsx       # Comments / Versions tab UI
+  store/
+    store.ts          # Redux store
+    uiSlice.ts        # Sidebar tab state (comments | versions)
+```
+
+Key pieces:
+
+- **`CollabEditor.tsx`**
+  - Creates a single `Y.Doc`
+  - Connects to the y-websocket server via `WebsocketProvider`
+  - Binds Yjs doc to Tiptap with the Collaboration extension
+  - Shows connection + sync debug info
+
+- **`Sidebar.tsx`**
+  - Simple UI with two tabs: Comments / Versions
+  - Uses Redux (`activeTab`) to track which is active
+
+---
+
+## 🧭 Possible Next Steps
+
+Planned / nice-to-have features:
+
+- 💬 **Real comments**:
+  - Anchor comments to text ranges
+  - Store threads in a shared Yjs structure
+- 🕒 **Versions tab**:
+  - Save “snapshots” of the document
+  - Restore previous versions
+- 👥 **Better presence**:
+  - Show connected users (name, color)
+  - Cursor positions and selection highlights
+- 🔐 **Backend persistence**:
+  - Save Yjs document state to a database
+  - Reload server-side state when room connects
+
+---
+
+## 🧑‍💻 Author
+
+**SyncScribe** is a personal project by Meenakshi Ratnawat,  
+built to practice:
+
+- advanced React patterns,
+- real-time collaboration with CRDTs (Yjs),
+- and clean state management with Redux Toolkit.
