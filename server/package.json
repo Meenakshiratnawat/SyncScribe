@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "dev": "vite",
+    "ws:server": "HOST=127.0.0.1 PORT=1234 y-websocket",
+    "dev:all": "npm run ws:server & npm run dev"
+  }
+}
